@@ -1,0 +1,154 @@
+
+% Package imports and definitions
+% (in alphabethical order)
+
+% Used for color in text
+% (Needed to be included early for some unknown dependency reason)
+\usepackage[usenames,dvipsnames]{xcolor}
+
+\usepackage[english]{babel}
+\usepackage{bytefield}
+\usepackage{colortbl}
+\usepackage{courier}
+\usepackage{datetime}
+\usepackage{enumitem}
+\usepackage{eqparbox}
+\usepackage{etoolbox}
+\usepackage{fancyhdr}
+\usepackage{float}
+
+% Use T1 to get more font glyphs, e.g. to be able to write <>|
+\usepackage[T1]{fontenc}
+
+\usepackage[stable]{footmisc}
+\usepackage{framed}
+
+% Used for images and figures
+\usepackage{graphicx}
+\graphicspath{{./figures/}}
+\graphicspath{{./}{./images/}}
+
+\usepackage{grffile}
+
+\usepackage[bookmarks, hidelinks]{hyperref}
+\usepackage{hyperref}
+% To get links in table of contents
+\hypersetup{
+  linktoc=all,
+  hidelinks
+}
+
+\usepackage[utf8]{inputenc}
+\usepackage{lastpage}
+
+% Use lmodern to get searchable pdf
+\usepackage{lmodern}
+
+\usepackage{longtable}
+
+\usepackage{ltablex}
+% Using X keeps table width (default is max width)
+\keepXColumns
+
+\usepackage{mdframed}
+\usepackage{microtype}
+\usepackage{minibox}
+\usepackage{pdflscape}
+\usepackage{pdfpages}
+
+% Silence some warnings
+\usepackage{silence}
+\WarningFilter{latex}{Underfull}
+\WarningFilter{latex}{Overfull}
+\WarningFilter{latex}{Text page}
+\WarningFilter{pdfcolmk}{Nothing to fix}
+
+\usepackage[usestackEOL]{stackengine}
+
+% Used for side-by-side figures
+\usepackage{subfig}
+
+\usepackage{svg}
+\usepackage{tabularx}
+\usepackage{tcolorbox}
+\usepackage{textcomp}
+\usepackage{titlesec}
+\usepackage{varioref}
+
+% Redefine auto-references
+\def\paragraphautorefname{section}
+\def\sectionautorefname{section}
+\def\subsectionautorefname{section}
+\def\subsubsectionautorefname{section}
+
+% Set the page style
+\pagestyle{fancy}
+
+% Define custom colors
+\definecolor{blue}{cmyk}{1,.50,0,.40}
+
+% No indentation
+\setlength{\parindent}          {0pt}
+
+% Add some space between paragraphs
+\setlength{\parskip}            {3pt plus 2pt}
+
+% Set lenghts to use 16 pt usual spacing between lines
+\setlength{\baselineskip}       {16.0pt}
+
+% Margins
+\setlength{\evensidemargin}     {0.5cm}
+\setlength{\oddsidemargin}      {0.5cm}
+\setlength{\marginparpush}      {1.0cm}
+\setlength{\marginparsep}       {0.75cm}
+\setlength{\marginparwidth}     {2.5cm}
+
+\setlength{\textwidth}          {150mm}
+\setlength{\headheight}         {29pt}
+
+% Clear all header and footer fields
+\fancyhf{}
+
+% Set the left and right document header
+\lhead
+        {\eqparbox{maxColumnWidth}
+            {\textcolor{Gray}
+                {\scriptsize{Title}}\\
+                 \scriptsize{My Document}
+            }
+        }
+\rhead
+        {\eqparbox{maxColumnWidth}
+            {\textcolor{Gray}
+                {\scriptsize{Classification}}\\
+                 \scriptsize{Public domain}
+            }
+        }
+
+% Redefine commands and formats for refs and dates
+\renewcommand{\refname}{\section{References\protect}}
+% Redefine date separator
+\renewcommand{\dateseparator}{-}
+% Redefine date format
+\newdateformat{todaydate}{\THEYEAR-\twodigit{\THEMONTH}-\twodigit{\THEDAY}}
+\todaydate
+
+% Set the headruler width
+\renewcommand{\headrulewidth}{1pt}
+% Set the headruler color
+\makeatletter
+\renewcommand{\headrule}{
+\setlength\@tempdima{\headrulewidth}
+\textcolor{blue}{\hrule\@height\@tempdima\@width\headwidth}
+\vskip -2\@tempdima}
+\makeatother
+
+% Title format
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+% Section num
+\setcounter{secnumdepth}{4}

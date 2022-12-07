@@ -1,0 +1,60 @@
+
+% Simple LaTeX document example
+\documentclass[11pt]{article}
+
+% Include template
+\input{template.tex}
+
+% Begin the document
+\begin{document}
+
+% Title page
+\begin{titlepage}
+    \begin{center}
+        \vspace{0.3 cm}
+        \textcolor{blue}{{\Huge \textbf{Generic Unified Memory dumP (GUMP)}}} \\
+        \vspace{0.4 cm}
+        \textcolor{blue}{{\large Version: \ref{lastVersionNumber}}} \\
+        \vspace{1.6 cm}
+    \end{center}
+
+    \begin{tcolorbox}[width=\textwidth, colframe={blue}, title=Classification: Public domain]
+        This document and its contents \textbf{is fully free to use} and is in the public domain.\\
+    \end{tcolorbox}
+
+    \thispagestyle{empty}
+    \hypersetup{pageanchor=false}
+\end{titlepage}
+\newpage
+
+% Footer
+\newpage
+\fancyfoot[R]{\thepage\ of \pageref{LastPage}}
+
+% Table of contents
+\tableofcontents
+\newpage
+
+% Version list
+\section{Version history}
+\begin{enumerate}[label=\textbf{\arabic*}, ref=\arabic*]
+    \setcounter{enumi}{0}
+    \item First version made in \LaTeX.
+    \item Changes.
+    \begin{itemize}
+        \item Renamed.
+        \item Updated.
+    \end{itemize}
+    \item Corrected.
+    \label{lastVersionNumber}
+\end{enumerate}
+\newpage
+
+% Introduction
+\section{Introduction}
+This is the introduction.
+\newpage
+
+% End the document
+\newpage
+\end{document}
