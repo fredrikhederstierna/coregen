@@ -512,7 +512,7 @@ elfcore_file_h elfcore_file_open(const char *filename,
   }
 
   // max core file size
-  if (ftruncate(fd, ELFCORE_MAX_SIZE) < 0) {
+  if (ftruncate(fd, (off_t)ELFCORE_MAX_SIZE) < 0) {
     perror("file size ftruncate failed");
     return NULL;
   }
@@ -551,7 +551,7 @@ int32_t elfcore_file_close(elfcore_file_h elf_file_h)
   // adjust the file length
   msync(elf_file_ptr, (size_t)align_ptr((void*)size, ELFCORE_PAGESIZE), MS_SYNC);
   munmap(elf_file_ptr, ELFCORE_MAX_SIZE);
-  if (ftruncate(fd, size) < 0) {
+  if (ftruncate(fd, (off_t)size) < 0) {
     fprintf(stderr, "elfcore file size too large: %lu max %lu", size, ELFCORE_MAX_SIZE);
     perror("elfcore file size too large");
   }
