@@ -152,7 +152,7 @@ struct gump_corefile_section_registers_s
 
     // Raw core registers
     uint32_t regs[38];
-  }; // union
+  } registers; // union
 
 } __attribute__((packed));
 

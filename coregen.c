@@ -113,44 +113,84 @@ int main(int argc, char **argv)
           printf("Section REGS\n");
 
           struct gump_corefile_section_registers_s *reg_sec = (struct gump_corefile_section_registers_s *)chunk->data;
+
           uint32_t version = reg_sec->version;
+
+          struct gump_corefile_program_meta_s *gump_prog_meta = (struct gump_corefile_program_meta_s *)&(reg_sec->meta);
+
+          uint32_t *gump_reg = (uint32_t*)(reg_sec->registers.regs);
+
+          printf("  version %d core %d kernel %d program %d process 0x%016llx thread 0x%016llx flags 0x%08x errno %ld regs %p\n",
+                 version,
+                 gump_prog_meta->core_id,
+                 gump_prog_meta->kernel_version,
+                 gump_prog_meta->program_version,
+                 (long long unsigned int)gump_prog_meta->process_id,
+                 (long long unsigned int)gump_prog_meta->thread_id,
+                 gump_prog_meta->flags,
+                 (long int)gump_prog_meta->errno,
+                 gump_reg);
 
           // write threads with regs
           // Data extracted from dump
-          static const elf32_arm_regs_t arm_registers =
-            {
-              .reg = {
-                // 0
-                0x0,
-                0x80000000,
-                0x80000000,
-                0x15121,
-                // 4
-                0x40,
-                0x0,
-                0x0,
-                0x2000ffb8,
-                // 8
-                0x0,
-                0x0,
-                0x0,
-                0x0,
-                // 12
-                0x2000ff84,
-                0x2000ffa8,
-                0x34cfd,
-                0x34d44,
-                // 16
-                0x61000000,
-                0x80000010 }
-            };
-          // TODO: HAVE SPECIAL RIFF 'udump' (ARM) 'FREG' for float regs... 256+4 = 260 byte
-          // True if math co-processor used, float regs, check Cortex-M0/M0+
-          static elf32_arm_fpregs_t arm_fpregs = { .freg = { 0,1,2,3,4,5,6,7,
-                                                             8,9,10,11,12,13,14,15,
-                                                             16,17,18,19,20,21,22,23,
-                                                             24,25,26,27,28,29,30,31 },
-                                                   .fpscr = 0xDEADBEEF };
+          // TODO: handle multiple thread instances, use heap list and free last
+          elf32_arm_regs_t *arm_registers = (elf32_arm_regs_t*)calloc(sizeof(elf32_arm_regs_t), 1);
+          arm_registers->reg[0]  = gump_reg[0]; //r0
+          arm_registers->reg[1]  = gump_reg[1]; //r1
+          arm_registers->reg[2]  = gump_reg[2]; //r2
+          arm_registers->reg[3]  = gump_reg[3]; //r3
+          arm_registers->reg[4]  = gump_reg[29]; //r4
+          arm_registers->reg[5]  = gump_reg[30]; //r5
+          arm_registers->reg[6]  = gump_reg[31]; //r6
+          arm_registers->reg[7]  = gump_reg[32]; //r7
+          arm_registers->reg[8]  = gump_reg[33]; //r8
+          arm_registers->reg[9]  = gump_reg[34]; //r9
+          arm_registers->reg[10] = gump_reg[35]; //r10
+          arm_registers->reg[11] = gump_reg[36]; //r11
+          arm_registers->reg[12] = gump_reg[4]; //r12
+          arm_registers->reg[13] = gump_reg[26]; //msp
+          arm_registers->reg[14] = gump_reg[5]; //lr
+          arm_registers->reg[15] = gump_reg[6]; //pc
+          arm_registers->reg[16] = gump_reg[7]; //psr
+          arm_registers->reg[17] = 0; //reserved
+          // no floats here
+
+          // TODO: handle multiple thread instances, use heap list and free last
+          elf32_arm_fpregs_t *arm_fpregs = (elf32_arm_fpregs_t *)calloc(sizeof(elf32_arm_fpregs_t), 1);
+          arm_fpregs->freg[0] = gump_reg[8]; //D0
+          arm_fpregs->freg[0] = gump_reg[9]; //D1
+          arm_fpregs->freg[0] = gump_reg[10]; //D2
+          arm_fpregs->freg[0] = gump_reg[11]; //D3
+          arm_fpregs->freg[0] = gump_reg[12]; //D4
+          arm_fpregs->freg[0] = gump_reg[13]; //D5
+          arm_fpregs->freg[0] = gump_reg[14]; //D6
+          arm_fpregs->freg[0] = gump_reg[15]; //D7
+          arm_fpregs->freg[0] = gump_reg[16]; //D8
+          arm_fpregs->freg[0] = gump_reg[17]; //D9
+          arm_fpregs->freg[0] = gump_reg[18]; //D10
+          arm_fpregs->freg[0] = gump_reg[19]; //D11
+          arm_fpregs->freg[0] = gump_reg[20]; //D12
+          arm_fpregs->freg[0] = gump_reg[21]; //D13
+          arm_fpregs->freg[0] = gump_reg[22]; //D14
+          arm_fpregs->freg[0] = gump_reg[23]; //D15
+          arm_fpregs->freg[0] = 0; //D16
+          arm_fpregs->freg[0] = 0; //D17
+          arm_fpregs->freg[0] = 0; //D18
+          arm_fpregs->freg[0] = 0; //D19
+          arm_fpregs->freg[0] = 0; //D20
+          arm_fpregs->freg[0] = 0; //D21
+          arm_fpregs->freg[0] = 0; //D22
+          arm_fpregs->freg[0] = 0; //D23
+          arm_fpregs->freg[0] = 0; //D24
+          arm_fpregs->freg[0] = 0; //D25
+          arm_fpregs->freg[0] = 0; //D26
+          arm_fpregs->freg[0] = 0; //D27
+          arm_fpregs->freg[0] = 0; //D28
+          arm_fpregs->freg[0] = 0; //D29
+          arm_fpregs->freg[0] = 0; //D30
+          arm_fpregs->freg[0] = 0; //D31
+          arm_fpregs->fpscr = gump_reg[24]; //fpscr
+
           // add thread section
           printf("THREAD SECTION: verions 0x%08x\n", version);
           (void)elfcore_file_thread_info_add(pid,
