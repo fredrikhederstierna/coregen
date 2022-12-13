@@ -17,7 +17,7 @@
 #include <stdbool.h>
 
 #include <riff_file_reader.h>
-#include <gump_corefile_format_v0.h>
+#include <gump_corefile_format.h>
 #include <elfcore_types.h>
 #include <elfcore_file_writer.h>
 
@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 
 #if (GUMP_COREFILE_VERSION >= 1)
           uint32_t version = reg_sec->version;
-          printf("  version %d\n");
+          printf("  version %d\n", version);
 
           struct gump_corefile_program_meta_s *gump_prog_meta = (struct gump_corefile_program_meta_s *)&(reg_sec->meta);
           printf("  core %d kernel %d program %d process 0x%016llx thread 0x%016llx flags 0x%08x errno %ld regs %p\n",
