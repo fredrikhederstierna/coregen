@@ -17,7 +17,7 @@
 #include <stdbool.h>
 
 #include <riff_file_reader.h>
-#include <gump_corefile_format.h>
+#include <gump_corefile_format_v0.h>
 #include <elfcore_types.h>
 #include <elfcore_file_writer.h>
 
@@ -113,15 +113,14 @@ int main(int argc, char **argv)
           printf("Section REGS\n");
 
           struct gump_corefile_section_registers_s *reg_sec = (struct gump_corefile_section_registers_s *)chunk->data;
-
-          uint32_t version = reg_sec->version;
-
-          struct gump_corefile_program_meta_s *gump_prog_meta = (struct gump_corefile_program_meta_s *)&(reg_sec->meta);
-
           uint32_t *gump_reg = (uint32_t*)(reg_sec->registers.regs);
 
-          printf("  version %d core %d kernel %d program %d process 0x%016llx thread 0x%016llx flags 0x%08x errno %ld regs %p\n",
-                 version,
+#if (GUMP_COREFILE_VERSION >= 1)
+          uint32_t version = reg_sec->version;
+          printf("  version %d\n");
+
+          struct gump_corefile_program_meta_s *gump_prog_meta = (struct gump_corefile_program_meta_s *)&(reg_sec->meta);
+          printf("  core %d kernel %d program %d process 0x%016llx thread 0x%016llx flags 0x%08x errno %ld regs %p\n",
                  gump_prog_meta->core_id,
                  gump_prog_meta->kernel_version,
                  gump_prog_meta->program_version,
@@ -130,6 +129,7 @@ int main(int argc, char **argv)
                  gump_prog_meta->flags,
                  (long int)gump_prog_meta->errno,
                  gump_reg);
+#endif
 
           // write threads with regs
           // Data extracted from dump
@@ -191,8 +191,10 @@ int main(int argc, char **argv)
           arm_fpregs->freg[0] = 0; //D31
           arm_fpregs->fpscr = gump_reg[24]; //fpscr
 
+#if (GUMP_COREFILE_VERSION >= 1)
           // add thread section
           printf("THREAD SECTION: verions 0x%08x\n", version);
+#endif
           (void)elfcore_file_thread_info_add(pid,
                                              (void*)&arm_registers,
                                              (void*)&arm_fpregs);
@@ -201,13 +203,16 @@ int main(int argc, char **argv)
           printf("Section MEM\n");
 
           struct gump_corefile_section_memory_s *mem_sec = (struct gump_corefile_section_memory_s *)chunk->data;
-          uint32_t version       = mem_sec->version;
           uint32_t start_address = mem_sec->start_address;
-          uint32_t end_address   = mem_sec->end_address;
           uint8_t *data          = (uint8_t*)&(chunk->data[sizeof(struct gump_corefile_section_memory_s)]);
 
           // add load section
-          printf("LOAD SECTION: verions 0x%08x start 0x%08x end 0x%08x data %p\n", version, start_address, end_address, data);
+          printf("LOAD SECTION: start 0x%08x data %p\n", start_address, data);
+#if (GUMP_COREFILE_VERSION >= 1)
+          uint32_t version       = mem_sec->version;
+          uint32_t end_address   = mem_sec->end_address;
+          printf("LOAD SECTION v1: verions 0x%08x end 0x%08x\n", version, end_address);
+#endif
           elfcore_file_load_section_info_add(start_address, chunk->size, (void *)data);
         }
         else {

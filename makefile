@@ -6,7 +6,7 @@ all:
 	@# standard gnu11 needed to get ftruncate() definition
 	gcc -o coregen -I. coregen.c riff_file_reader.c elfcore_file_writer.c -g3 -W -Wall -Wextra -Wno-unused-parameter -O2 -std=gnu11
 
-run:
+generate:
 	./coregen app.gump app.elfcore
 
 dis:
@@ -17,6 +17,9 @@ read:
 
 debug:
 	$(GNU_TOOLCHAIN_PATH)/arm-none-eabi-gdb app.elf app.elfcore
+
+debug_gdb:
+	$(GNU_TOOLCHAIN_PATH)/arm-none-eabi-gdb app.elf app.gdbcore
 
 strip:
 	cp app.elfcore app_stripped.elfcore
