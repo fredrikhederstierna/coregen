@@ -89,10 +89,29 @@ struct gump_corefile_section_meta_s
 
 } __attribute__((packed));
 
+/* Contains meta info for a specific driver or application executable */
+struct gump_corefile_program_meta_s
+{
+  // In case of multi-core, default 0
+  uint32_t core_id;
+  // In case of eg RTOS or OS kernel
+  uint32_t kernel_version;
+  // In case of multi-threading, applications or drivers
+  uint32_t program_version;
+  // In case of multi-threading, default 0
+  uint64_t process_id;
+  uint64_t thread_id;
+  // other thread specific meta
+  uint32_t flags;
+  int32_t  errno;
+} __attribute__((packed));
+
 /* Contains info on registers at corefile generation */
 struct gump_corefile_section_registers_s
 {
   uint32_t version;
+
+  struct gump_corefile_program_meta_s meta;
 
   union {
     // This struct is based on CrashCatcher for Cortex-M.
