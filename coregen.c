@@ -13,11 +13,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #include <riff_file_reader.h>
 #include <gump_corefile_format.h>
 #include <elfcore_types.h>
 #include <elfcore_file_writer.h>
+
+static bool verbose = true;
 
 //--------------------------------------------------
 static void indent(int32_t level)
@@ -108,6 +112,9 @@ int main(int argc, char **argv)
         else if (strncmp(sec_id, GUMP_COREFILE_MAGIC_REGS, 4) == 0) {
           printf("Section REGS\n");
 
+          struct gump_corefile_section_registers_s *reg_sec = (struct gump_corefile_section_registers_s *)chunk->data;
+          uint32_t version = reg_sec->version;
+
           // write threads with regs
           // Data extracted from dump
           static const elf32_arm_regs_t arm_registers =
@@ -144,6 +151,8 @@ int main(int argc, char **argv)
                                                              16,17,18,19,20,21,22,23,
                                                              24,25,26,27,28,29,30,31 },
                                                    .fpscr = 0xDEADBEEF };
+          // add thread section
+          printf("THREAD SECTION: verions 0x%08x\n", version);
           (void)elfcore_file_thread_info_add(pid,
                                              (void*)&arm_registers,
                                              (void*)&arm_fpregs);
@@ -151,33 +160,41 @@ int main(int argc, char **argv)
         else if (strncmp(sec_id, GUMP_COREFILE_MAGIC_MEM, 4) == 0) {
           printf("Section MEM\n");
 
-          // test, add some load sections
-          uint32_t data1 = 0xdeadcafe;
-          uint32_t data2 = 0xd011face;
-          elfcore_file_load_section_info_add(0x20000000, 4, (void *)&data1);
-          elfcore_file_load_section_info_add(0x20000040, 4, (void *)&data2);
+          struct gump_corefile_section_memory_s *mem_sec = (struct gump_corefile_section_memory_s *)chunk->data;
+          uint32_t version       = mem_sec->version;
+          uint32_t start_address = mem_sec->start_address;
+          uint32_t end_address   = mem_sec->end_address;
+          uint8_t *data          = (uint8_t*)&(chunk->data[sizeof(struct gump_corefile_section_memory_s)]);
+
+          // add load section
+          printf("LOAD SECTION: verions 0x%08x start 0x%08x end 0x%08x data %p\n", version, start_address, end_address, data);
+          elfcore_file_load_section_info_add(start_address, chunk->size, (void *)data);
         }
         else {
           printf("unknown ID: \"%s\"\n", sec_id);
         }
 
-        // dump data
-        uint32_t i;
-        uint32_t len = chunk->size;
-        if (len > 16) {
-          len = 16;
-        }
-        indent(level+1); printf("....DATA : [");
-        for (i = 0; i < len; i++) {
-          if (i > 0) {
-            printf(" ");
+        // extra debug
+        if (verbose) {
+          // dump data
+          uint32_t i;
+          uint32_t len = chunk->size;
+          if (len > 16) {
+            len = 16;
           }
-          printf("%02x", chunk->data[i]);
+          indent(level+1); printf("....DATA : [");
+          for (i = 0; i < len; i++) {
+            if (i > 0) {
+              printf(" ");
+            }
+            printf("%02x", chunk->data[i]);
+          }
+          if (chunk->size > len) {
+            printf("...");
+          }
+          printf("]\n");
         }
-        if (chunk->size > len) {
-          printf("...");
-        }
-        printf("]\n");
+
       }
       else {
         printf("EOF.\n");
@@ -185,6 +202,20 @@ int main(int argc, char **argv)
       }
     } while (chunk != NULL);
 
+    // write ELF corefile
+    printf("Writing ELFCORE...\n");
+    res = elfcore_file_write(ef);
+    if (res != 0) {
+      perror("Wrote ELFCORE\n");
+    }
+    res = elfcore_file_close(ef);
+    if (res != 0) {
+      perror("Closed file\n");
+    }
+
+    // tear down and close GUMP RIFF file
+    // must be done AFTER write ELF file, since ELF file
+    // refer to in-place data pointers in mmapped RIFF file.
     res = riff_file_data_chunk_iterator_delete(iter_h);
     if (res != 0) {
       perror("iterator delete fail");
@@ -195,16 +226,6 @@ int main(int argc, char **argv)
     }
   }
 
-  // write corefile
-  printf("Writing ELFCORE...\n");
-  res = elfcore_file_write(ef);
-  if (res != 0) {
-    perror("Wrote ELFCORE\n");
-  }
-  res = elfcore_file_close(ef);
-  if (res != 0) {
-    perror("Closed file\n");
-  }
-
+  // done
   return EXIT_SUCCESS;
 }
