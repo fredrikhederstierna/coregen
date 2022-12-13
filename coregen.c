@@ -108,6 +108,10 @@ int main(int argc, char **argv)
         // check section id
         if (strncmp(sec_id, GUMP_COREFILE_MAGIC_META, 4) == 0) {
           printf("Section META\n");
+
+          struct gump_corefile_section_meta_s *meta_sec = (struct gump_corefile_section_meta_s *)chunk->data;
+          uint32_t version = meta_sec->version;
+          printf("  version %d\n", version);
         }
         else if (strncmp(sec_id, GUMP_COREFILE_MAGIC_REGS, 4) == 0) {
           printf("Section REGS\n");
@@ -155,6 +159,25 @@ int main(int argc, char **argv)
           arm_registers->reg[17] = 0; //reserved
           // no floats here
 
+          printf("r0 0x%08x\n", arm_registers->reg[0]);
+          printf("r1 0x%08x\n", arm_registers->reg[1]);
+          printf("r2 0x%08x\n", arm_registers->reg[2]);
+          printf("r3 0x%08x\n", arm_registers->reg[3]);
+          printf("r4 0x%08x\n", arm_registers->reg[4]);
+          printf("r5 0x%08x\n", arm_registers->reg[5]);
+          printf("r6 0x%08x\n", arm_registers->reg[6]);
+          printf("r7 0x%08x\n", arm_registers->reg[7]);
+          printf("r8 0x%08x\n", arm_registers->reg[8]);
+          printf("r9 0x%08x\n", arm_registers->reg[9]);
+          printf("r10 0x%08x\n", arm_registers->reg[10]);
+          printf("r11 0x%08x\n", arm_registers->reg[11]);
+          printf("r12 0x%08x\n", arm_registers->reg[12]);
+          printf("sp 0x%08x\n", arm_registers->reg[13]);
+          printf("lr 0x%08x\n", arm_registers->reg[14]);
+          printf("pc 0x%08x\n", arm_registers->reg[15]);
+          printf("psr 0x%08x\n", arm_registers->reg[16]);
+          printf("reserved 0x%08x\n", arm_registers->reg[17]);
+
           // TODO: handle multiple thread instances, use heap list and free last
           elf32_arm_fpregs_t *arm_fpregs = (elf32_arm_fpregs_t *)calloc(sizeof(elf32_arm_fpregs_t), 1);
           arm_fpregs->freg[0] = gump_reg[8]; //D0
@@ -196,8 +219,8 @@ int main(int argc, char **argv)
           printf("THREAD SECTION: verions 0x%08x\n", version);
 #endif
           (void)elfcore_file_thread_info_add(pid,
-                                             (void*)&arm_registers,
-                                             (void*)&arm_fpregs);
+                                             (void*)arm_registers,
+                                             (void*)arm_fpregs);
         }
         else if (strncmp(sec_id, GUMP_COREFILE_MAGIC_MEM, 4) == 0) {
           printf("Section MEM\n");
