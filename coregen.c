@@ -8,6 +8,13 @@
  *   ELF core file writer
  *
  * Fredrik Hederstierna 2021/2022
+ *
+ * This file is in the public domain.
+ * You can do whatever you want with it.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
 #include <stdio.h>
@@ -117,7 +124,9 @@ int main(int argc, char **argv)
           printf("Section REGS\n");
 
           struct gump_corefile_section_registers_s *reg_sec = (struct gump_corefile_section_registers_s *)chunk->data;
-          uint32_t *gump_reg = (uint32_t*)(reg_sec->registers.regs);
+          uint32_t regs[38];
+          memcpy(regs, reg_sec->registers.regs, sizeof(regs));
+          uint32_t *gump_reg = (uint32_t*)regs;
 
 #if (GUMP_COREFILE_VERSION >= 1)
           uint32_t version = reg_sec->version;
