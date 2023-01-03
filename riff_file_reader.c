@@ -2,17 +2,23 @@
  * Simple RIFF file reader.
  * Uses memory mapped file to also being able to handle large files.
  *
- * Fredrik Hederstierna 2021
- *
  * More info on RIFF at
  * https://en.wikipedia.org/wiki/Resource_Interchange_File_Format
  *
- * This file is in the public domain.
- * You can do whatever you want with it.
+ * Copyright (C) 2021/2022 Fredrik Hederstierna
+ * (https://github.com/fredrikhederstierna)
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include <stdio.h>
@@ -92,7 +98,10 @@ riff_file_h riff_file_open(const char *filename, const char type[4])
   f->size = fst.st_size;
 
   // memory map file
-  void *file_addr = mmap(0,           //addr
+  // (man-page: "If addr is NULL, then the kernel chooses the (page-aligned)
+  // address at which to create the mapping.")
+  assert(f->size > 0);
+  void *file_addr = mmap(NULL,        //addr
                          f->size,     //length
                          PROT_READ,   //prot
                          MAP_PRIVATE, //flags
@@ -106,6 +115,8 @@ riff_file_h riff_file_open(const char *filename, const char type[4])
     return NULL;
   }
   else {
+    // (man-page: "After the mmap() call has returned, the file descriptor, fd,
+    // can be closed immediately without invalidating the mapping.")
     close(fd);
   }
 
@@ -113,7 +124,7 @@ riff_file_h riff_file_open(const char *filename, const char type[4])
   void *file_end = file_addr + f->size;
   if ((file_end - file_addr) < (int)sizeof(struct riff_file_header_chunk_s)) {
     fprintf(stderr, "riff header too short\n");
-    int res = munmap(0, f->size);
+    int res = munmap(file_addr, f->size);
     if (res != 0) {
       perror("munmap file failed");
     }
@@ -135,7 +146,7 @@ riff_file_h riff_file_open(const char *filename, const char type[4])
     fprintf(stderr, "format 0x%02x:0x%02x:0x%02x:0x%02x \"%c%c%c%c\"\n",
             header->format[0], header->format[1], header->format[2], header->format[3],
             header->format[0], header->format[1], header->format[2], header->format[3]);
-    int res = munmap(0, f->size);
+    int res = munmap(f->vaddr, f->size);
     if (res != 0) {
       perror("file munmap failed");
     }
@@ -277,6 +288,7 @@ int32_t riff_file_data_chunk_iterator_delete(riff_file_data_chunk_iterator_h ite
 int32_t riff_file_close(riff_file_h file_h)
 {
   struct riff_file_s *f = (struct riff_file_s *)file_h;
+  assert(f != NULL);
   int res = munmap(f->vaddr, f->size);
   if (res != 0) {
     perror("file munmap failed");

@@ -23,14 +23,20 @@
  *
  * Uses memory mapped file to also being able to handle large files.
  *
- * Fredrik Hederstierna 2021
+ * Copyright (C) 2021/2022 Fredrik Hederstierna
+ * (https://github.com/fredrikhederstierna)
  *
- * This file is in the public domain.
- * You can do whatever you want with it.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 //----------------------------------------
@@ -514,19 +520,29 @@ elfcore_file_h elfcore_file_open(const char *filename,
   // max core file size
   if (ftruncate(fd, (off_t)ELFCORE_MAX_SIZE) < 0) {
     perror("file size ftruncate failed");
+    close(fd);
     return NULL;
   }
 
   // memory map file
-  void *elf = mmap(0,
-                   ELFCORE_MAX_SIZE,
-                   (PROT_READ | PROT_WRITE),
-                   MAP_SHARED,
-                   fd,
-                   0);
+  // (man-page: "If addr is NULL, then the kernel chooses the (page-aligned)
+  // address at which to create the mapping.")
+  void *elf = mmap(NULL,                     //addr
+                   ELFCORE_MAX_SIZE,         //length
+                   (PROT_READ | PROT_WRITE), //prot
+                   MAP_SHARED,               //flags
+                   fd,                       //fd
+                   0                         //offset
+                   );
   if (elf == MAP_FAILED) {
     perror("failed mapping new file");
+    close(fd);
     return NULL;
+  }
+  else {
+    // (man-page: "After the mmap() call has returned, the file descriptor, fd,
+    // can be closed immediately without invalidating the mapping.")
+    // Though we keep it open here since we want to adjust length when closing.
   }
 
   // create handle
@@ -543,14 +559,24 @@ elfcore_file_h elfcore_file_open(const char *filename,
 int32_t elfcore_file_close(elfcore_file_h elf_file_h)
 {
   elfcore_file_t *elfcore_file = (elfcore_file_t *)elf_file_h;
+  assert(elfcore_file != NULL);
 
   void *elf_file_ptr = elfcore_file->elf;
+  assert(elf_file_ptr != NULL);
   int fd             = elfcore_file->fd;
   size_t size        = elfcore_file->size;
+  assert(size > 0);
 
   // adjust the file length
-  msync(elf_file_ptr, (size_t)align_ptr((void*)size, ELFCORE_PAGESIZE), MS_SYNC);
-  munmap(elf_file_ptr, ELFCORE_MAX_SIZE);
+  int res;
+  res = msync(elf_file_ptr, (size_t)align_ptr((void*)size, ELFCORE_PAGESIZE), MS_SYNC);
+  if (res != 0) {
+    perror("file msync failed");
+  }
+  res = munmap(elf_file_ptr, ELFCORE_MAX_SIZE);
+  if (res != 0) {
+    perror("file munmap failed");
+  }
   if (ftruncate(fd, (off_t)size) < 0) {
     fprintf(stderr, "elfcore file size too large: %lu max %lu", size, ELFCORE_MAX_SIZE);
     perror("elfcore file size too large");

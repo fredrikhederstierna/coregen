@@ -5,22 +5,48 @@
  * Simple RIFF file reader.
  * Uses memory mapped file to also being able to handle large files.
  *
- * Fredrik Hederstierna 2021
- *
  * RIFF format is used in several popular formats as WAV, AVI, WEBP.
  * More info on RIFF at
  * https://en.wikipedia.org/wiki/Resource_Interchange_File_Format
  *
- * This file is in the public domain.
- * You can do whatever you want with it.
+ * Copyright (C) 2021/2022 Fredrik Hederstierna
+ * (https://github.com/fredrikhederstierna)
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include <stdint.h>
 
+/**
+   RIFF files consist entirely of "chunks".
+   (from https://en.wikipedia.org/wiki/Resource_Interchange_File_Format)
+
+   All chunks have the following format:
+
+   4 bytes         : ASCII identifier for this chunk.
+   4 bytes         : unsigned, little-endian 32-bit integer with the length
+   Var-sized field : chunk data itself, of the size given in the previous field
+   Pad byte        : if the chunk's length is not even
+
+   Two chunk identifiers, "RIFF" and "LIST", introduce a chunk that can contain
+   subchunks.  The RIFF and LIST chunk data (appearing after the identifier and
+   length) have the following format:
+
+   4 bytes: an ASCII identifier for this particular RIFF or LIST chunk.
+   rest of data: subchunks.
+
+   The file itself consists of one RIFF chunk, which then can contain further subchunks.
+*/
 struct riff_file_data_subchunk_s
 {
   // ascii identifier
@@ -30,7 +56,7 @@ struct riff_file_data_subchunk_s
   // variable size field
   uint8_t data[];
 
-  // possibly add a pad byte, if the chunk's length is not even
+  // possibly parsed data have an added pad byte, if the chunk length not even
 };
 
 struct riff_file_list_chunk_s
